@@ -1,0 +1,128 @@
+version: 1
+score_name: "ChangeRiskScore"
+
+# Scorecard scaling parameters
+# points0: Base score added to all calculations
+scaling:
+  points0: 600
+
+# Scorecard bins in scorecardpy-compatible format
+# Each feature lists bins with their assigned points
+scorecard:
+  resilience_tier:
+    - bin: "T1"
+      points: 18
+    - bin: "T2"
+      points: 12
+    - bin: "T3"
+      points: 6
+    - bin: "T4"
+      points: 2
+
+  cia_max:
+    - bin: "HIGH"
+      points: 16
+    - bin: "MEDIUM"
+      points: 10
+    - bin: "LOW"
+      points: 4
+
+  change_size:
+    - bin: "XS"
+      points: 0
+    - bin: "S"
+      points: 3
+    - bin: "M"
+      points: 6
+    - bin: "L"
+      points: 10
+    - bin: "XL"
+      points: 14
+
+  change_type:
+    - bin: "DOC_CONFIG_ONLY"
+      points: 0
+    - bin: "MINOR"
+      points: 4
+    - bin: "MODERATE"
+      points: 8
+    - bin: "MAJOR"
+      points: 12
+    - bin: "ARCHITECTURAL"
+      points: 16
+
+  novelty:
+    - bin: "REPEAT"
+      points: 0
+    - bin: "VARIANT"
+      points: 4
+    - bin: "NEW_PATTERN"
+      points: 8
+
+  rollback_complexity:
+    - bin: "FEATURE_FLAG"
+      points: -3
+    - bin: "SIMPLE"
+      points: 0
+    - bin: "SCRIPTED_MULTI_STEP"
+      points: 3
+    - bin: "MANUAL_COMPLEX"
+      points: 6
+    - bin: "IRREVERSIBLE"
+      points: 9
+
+  test_depth:
+    - bin: "NONE"
+      points: 8
+    - bin: "UNIT_ONLY"
+      points: 4
+    - bin: "UNIT_INTEGRATION"
+      points: 0
+    - bin: "FULL"
+      points: -4
+    - bin: "FULL_PLUS_CHAOS"
+      points: -8
+
+  runtime_exposure:
+    - bin: "NON_PROD"
+      points: 0
+    - bin: "INTERNAL"
+      points: 5
+    - bin: "LIMITED_EXTERNAL"
+      points: 10
+    - bin: "ALL_CUSTOMERS"
+      points: 16
+
+  # Numeric features use scorecardpy interval notation
+  apps_sharing_codebase:
+    - bin: "[-inf,2)"
+      points: 0
+    - bin: "[2,4)"
+      points: 4
+    - bin: "[4,6)"
+      points: 8
+    - bin: "[6,10)"
+      points: 12
+    - bin: "[10,inf)"
+      points: 16
+
+  downstream_critical_deps:
+    - bin: "[-inf,2)"
+      points: 0
+    - bin: "[2,4)"
+      points: 5
+    - bin: "[4,8)"
+      points: 9
+    - bin: "[8,inf)"
+      points: 14
+
+# Risk bands based on total score (base 600 + points)
+bands:
+  - name: "LOW"
+    max_score: 629
+  - name: "MEDIUM"
+    max_score: 659
+  - name: "HIGH"
+    max_score: 689
+  - name: "CRITICAL"
+    max_score: 9999
