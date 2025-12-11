@@ -1,4 +1,4 @@
-version: 1
+version: 2
 score_name: "ChangeRiskScore"
 
 # Scorecard scaling parameters
@@ -6,27 +6,160 @@ score_name: "ChangeRiskScore"
 scaling:
   points0: 600
 
+# Feature metadata - documents collection method for each feature
+# collection: questionnaire | cmdb | git | cicd | derived
+feature_metadata:
+  data_sensitivity:
+    source: questionnaire
+    question_id: data_sensitivity
+    description: Most sensitive data type handled by application
+  downtime_impact:
+    source: questionnaire
+    question_id: downtime_impact
+    description: Business impact of 4-hour outage
+  integrity_impact:
+    source: questionnaire
+    question_id: integrity_impact
+    description: Impact of data corruption
+  breach_consequence:
+    source: questionnaire
+    question_id: breach_consequence
+    description: Worst-case security breach scenario
+  disaster_recovery:
+    source: questionnaire
+    question_id: disaster_recovery
+    description: Required recovery time (RTO)
+  system_dependencies:
+    source: questionnaire
+    question_id: system_dependencies
+    description: Number of downstream dependent systems
+  regulatory_count:
+    source: questionnaire
+    question_id: regulatory_context
+    description: Count of applicable regulatory frameworks
+  resilience_category:
+    source: cmdb
+    table: spdw_vwsfservice_offering
+    column: resiliency_category
+    description: CMDB resilience tier (0-3)
+  change_size:
+    source: git
+    description: Size derived from lines changed
+  test_depth:
+    source: cicd
+    description: Test stages passed in pipeline
+  apps_sharing_codebase:
+    source: derived
+    table: component_mapping
+    description: Count of apps linked to same repository
+  downstream_critical_deps:
+    source: derived
+    table: spdw_vwsfconfigcirel
+    description: Count from dependency graph traversal
+
 # Scorecard bins in scorecardpy-compatible format
-# Each feature lists bins with their assigned points
 scorecard:
-  resilience_tier:
-    - bin: "T1"
-      points: 18
-    - bin: "T2"
-      points: 12
-    - bin: "T3"
-      points: 6
-    - bin: "T4"
-      points: 2
+  # === QUESTIONNAIRE-BASED FEATURES ===
 
-  cia_max:
-    - bin: "HIGH"
+  # Q1: Data sensitivity (severity 1-5)
+  data_sensitivity:
+    - bin: "payment_card_data"
       points: 16
-    - bin: "MEDIUM"
-      points: 10
-    - bin: "LOW"
+    - bin: "regulated_pii"
+      points: 12
+    - bin: "customer_pii"
+      points: 8
+    - bin: "internal_business"
       points: 4
+    - bin: "public_data"
+      points: 0
 
+  # Q2: Downtime impact (severity 1-4)
+  downtime_impact:
+    - bin: "revenue_loss_critical"
+      points: 12
+    - bin: "major_disruption"
+      points: 8
+    - bin: "productivity_impact"
+      points: 4
+    - bin: "minimal_impact"
+      points: 0
+
+  # Q3: Integrity impact (severity 1-4)
+  integrity_impact:
+    - bin: "financial_harm"
+      points: 12
+    - bin: "decision_impact"
+      points: 8
+    - bin: "operational_inefficiency"
+      points: 4
+    - bin: "low_impact"
+      points: 0
+
+  # Q4: Breach consequence (severity 1-5)
+  breach_consequence:
+    - bin: "payment_exposure"
+      points: 16
+    - bin: "pii_breach"
+      points: 12
+    - bin: "customer_data_exposure"
+      points: 8
+    - bin: "internal_exposure"
+      points: 4
+    - bin: "public_only"
+      points: 0
+
+  # Q5: Disaster recovery RTO (severity 1-4)
+  disaster_recovery:
+    - bin: "four_hours"
+      points: 12
+    - bin: "twentyfour_hours"
+      points: 8
+    - bin: "three_days"
+      points: 4
+    - bin: "one_week"
+      points: 0
+
+  # Q6: System dependencies (severity 1-4)
+  system_dependencies:
+    - bin: "high_dependency"
+      points: 12
+    - bin: "moderate_dependency"
+      points: 8
+    - bin: "low_dependency"
+      points: 4
+    - bin: "standalone"
+      points: 0
+
+  # Q7: Regulatory framework count (0-5)
+  regulatory_count:
+    - bin: "[-inf,1)"
+      points: 0
+    - bin: "[1,2)"
+      points: 3
+    - bin: "[2,3)"
+      points: 6
+    - bin: "[3,4)"
+      points: 8
+    - bin: "[4,inf)"
+      points: 10
+
+  # === CMDB-BASED FEATURES ===
+
+  # Resilience category from CMDB (0=most critical, 3=least)
+  resilience_category:
+    - bin: "0"
+      points: 12
+    - bin: "1"
+      points: 8
+    - bin: "2"
+      points: 4
+    - bin: "3"
+      points: 0
+
+  # === GIT/CI-BASED FEATURES ===
+
+  # Change size from git diff
   change_size:
     - bin: "XS"
       points: 0
@@ -39,38 +172,7 @@ scorecard:
     - bin: "XL"
       points: 14
 
-  change_type:
-    - bin: "DOC_CONFIG_ONLY"
-      points: 0
-    - bin: "MINOR"
-      points: 4
-    - bin: "MODERATE"
-      points: 8
-    - bin: "MAJOR"
-      points: 12
-    - bin: "ARCHITECTURAL"
-      points: 16
-
-  novelty:
-    - bin: "REPEAT"
-      points: 0
-    - bin: "VARIANT"
-      points: 4
-    - bin: "NEW_PATTERN"
-      points: 8
-
-  rollback_complexity:
-    - bin: "FEATURE_FLAG"
-      points: -3
-    - bin: "SIMPLE"
-      points: 0
-    - bin: "SCRIPTED_MULTI_STEP"
-      points: 3
-    - bin: "MANUAL_COMPLEX"
-      points: 6
-    - bin: "IRREVERSIBLE"
-      points: 9
-
+  # Test depth from CI/CD pipeline
   test_depth:
     - bin: "NONE"
       points: 8
@@ -83,17 +185,9 @@ scorecard:
     - bin: "FULL_PLUS_CHAOS"
       points: -8
 
-  runtime_exposure:
-    - bin: "NON_PROD"
-      points: 0
-    - bin: "INTERNAL"
-      points: 5
-    - bin: "LIMITED_EXTERNAL"
-      points: 10
-    - bin: "ALL_CUSTOMERS"
-      points: 16
+  # === DERIVED FEATURES ===
 
-  # Numeric features use scorecardpy interval notation
+  # Apps sharing codebase (from component_mapping)
   apps_sharing_codebase:
     - bin: "[-inf,2)"
       points: 0
@@ -106,6 +200,7 @@ scorecard:
     - bin: "[10,inf)"
       points: 16
 
+  # Downstream critical dependencies (from dependency graph)
   downstream_critical_deps:
     - bin: "[-inf,2)"
       points: 0
@@ -117,12 +212,14 @@ scorecard:
       points: 14
 
 # Risk bands based on total score (base 600 + points)
+# Max possible: 600 + 140 = 740
+# Min possible: 600 - 8 = 592
 bands:
   - name: "LOW"
-    max_score: 629
+    max_score: 635
   - name: "MEDIUM"
-    max_score: 659
+    max_score: 670
   - name: "HIGH"
-    max_score: 689
+    max_score: 705
   - name: "CRITICAL"
     max_score: 9999
